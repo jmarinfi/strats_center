@@ -7,8 +7,8 @@ class IDataHandler(ABC):
     """
 
     @abstractmethod
-    def get_latest_bars(self, symbol: str, N: int = 1):
-        """Retorna las últimas N barras para un símbolo dado."""
+    def get_latest_bars(self, N: int = 1):
+        """Retorna las últimas N barras."""
         raise NotImplementedError("Este método debe ser implementado por la subclase.")
     
     @abstractmethod
