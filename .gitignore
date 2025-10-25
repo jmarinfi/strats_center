@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Data files
+backtests/
+*.csv
+*.h5
+*.db
+logs/
+*.log
