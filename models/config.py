@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator, root_validator, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,8 +68,9 @@ class CSVDataSourceSettings(BaseModel):
     """
     Modelo de configuración para una fuente de datos CSV.
     """
-    data_path: str = ""
+    data_path: str = "backtest_data"
     file_pattern: str = "*.csv"
+    timestamp_column: str = "openTime"
 
 
 class BinanceAPISettings(BaseModel):
@@ -86,8 +87,8 @@ class DataSourceConfig(BaseModel):
     Modelo de configuración para la fuente de datos.
     """
     type: DataSourceType = DataSourceType.CSV
-        csv: CSVDataSourceSettings = Field(default_factory=lambda: CSVDataSourceSettings())
-        binance_api: BinanceAPISettings = Field(default_factory=lambda: BinanceAPISettings())
+    csv: CSVDataSourceSettings = Field(default_factory=CSVDataSourceSettings)
+    binance_api: BinanceAPISettings = Field(default_factory=BinanceAPISettings)
 
 
 class RiskManagementConfig(BaseModel):
@@ -106,23 +107,24 @@ class StrategyConfig(BaseModel):
     name: str
     enabled: bool = True
     parameters: Dict[str, Any] = Field(default_factory=dict)
-        risk_management: RiskManagementConfig = Field(default_factory=lambda: RiskManagementConfig())
+    risk_management: RiskManagementConfig = Field(default_factory=RiskManagementConfig) # type: ignore
 
-    @field_validator('parameters')
-    def validate_strategy_parameters(cls, v, values):
+    @model_validator(mode="after")
+    def validate_strategy_parameters(self) -> "StrategyConfig":
         """Valida los parámetros específicos de la estrategia."""
-        strategy_name = values.get('name')
-
-        if strategy_name == "sma_crossover":
+        if self.name == "sma_crossover":
             required_params = ["short_period", "long_period"]
             for param in required_params:
-                if param not in v:
+                if param not in self.parameters:
                     raise ValueError(f"El parámetro '{param}' es obligatorio para la estrategia SMA Crossover.")
                 
-            if v.get("short_period", 0) >= v.get("long_period", 0):
+            short_period = self.parameters.get("short_period", 0)
+            long_period = self.parameters.get("long_period", 0)
+
+            if short_period >= long_period:
                 raise ValueError("El 'short_period' debe ser menor que el 'long_period'.")
             
-        return v
+        return self
     
 
 class CommissionConfig(BaseModel):
@@ -130,7 +132,7 @@ class CommissionConfig(BaseModel):
     Modelo de configuración para las comisiones de trading.
     """
     type: CommissionType = CommissionType.PERCENTAGE
-        rate: float = Field(0.001, ge=0.0, description="Tasa de comisión (por ejemplo, 0.001 para 0.1%).")
+    rate: float = Field(0.001, ge=0.0, description="Tasa de comisión (por ejemplo, 0.001 para 0.1%).")
 
 
 class BacktestingConfig(BaseModel):
@@ -139,7 +141,7 @@ class BacktestingConfig(BaseModel):
     """
     enabled: bool = True
     initial_capital: float = Field(10000.0, gt=0.0, description="Capital inicial para backtesting.")
-        commission: CommissionConfig = Field(default_factory=lambda: CommissionConfig())
+    commission: CommissionConfig = Field(default_factory=CommissionConfig) # type: ignore
     start_date: Optional[str] = Field(None, description="Fecha de inicio del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
     end_date: Optional[str] = Field(None, description="Fecha de fin del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
     save_trades: bool = True
@@ -168,7 +170,7 @@ class DatabaseConfig(BaseModel):
     Modelo de configuración para la base de datos.
     """
     type: DatabaseType = DatabaseType.SQLITE
-        sqlite: SQLiteSettings = Field(default_factory=lambda: SQLiteSettings())
+    sqlite: SQLiteSettings = Field(default_factory=SQLiteSettings)
 
 
 class EventsConfig(BaseModel):
@@ -199,6 +201,7 @@ class FileLogHandler(BaseModel):
     backup_count: int = 5
 
     @field_validator('path')
+    @classmethod
     def create_log_directory(cls, v):
         """Crea el directorio para los logs si no existe."""
         log_path = Path(v)
@@ -212,8 +215,8 @@ class LoggingConfig(BaseModel):
     """
     level: LogLevel = LogLevel.INFO
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        console: ConsoleLogHandler = Field(default_factory=lambda: ConsoleLogHandler())
-        file: FileLogHandler = Field(default_factory=lambda: FileLogHandler())
+    console: ConsoleLogHandler = Field(default_factory=ConsoleLogHandler)
+    file: FileLogHandler = Field(default_factory=FileLogHandler)
 
 
 class SymbolConfig(BaseModel):
@@ -240,12 +243,12 @@ class TradingConfig(BaseSettings):
     # Secciones de configuración
     app: AppConfig = Field(default_factory=AppConfig)
     data_source: DataSourceConfig = Field(default_factory=DataSourceConfig)
-    app: AppConfig = Field(default_factory=lambda: AppConfig())
-    data_source: DataSourceConfig = Field(default_factory=lambda: DataSourceConfig())
-    backtesting: BacktestingConfig = Field(default_factory=lambda: BacktestingConfig())
-    database: DatabaseConfig = Field(default_factory=lambda: DatabaseConfig())
-    events: EventsConfig = Field(default_factory=lambda: EventsConfig())
-    logging: LoggingConfig = Field(default_factory=lambda: LoggingConfig())
+    strategy: StrategyConfig = Field(..., description="Configuración de la estrategia de trading.")
+    backtesting: BacktestingConfig = Field(default_factory=BacktestingConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    events: EventsConfig = Field(default_factory=EventsConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    symbols: List[SymbolConfig] = Field(default_factory=list)
 
     # Configuraciones de pydantic-settings
     model_config = SettingsConfigDict(
