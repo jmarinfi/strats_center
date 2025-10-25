@@ -87,17 +87,17 @@ class DataSourceConfig(BaseModel):
     Modelo de configuración para la fuente de datos.
     """
     type: DataSourceType = DataSourceType.CSV
-    csv: CSVDataSourceSettings = Field(default_factory=CSVDataSourceSettings)
-    binance_api: BinanceAPISettings = Field(default_factory=BinanceAPISettings)
+    csv: CSVDataSourceSettings = Field(default_factory=lambda: CSVDataSourceSettings())
+    binance_api: BinanceAPISettings = Field(default_factory=lambda: BinanceAPISettings())
 
 
 class RiskManagementConfig(BaseModel):
     """
     Modelo de configuración para la gestión de riesgos.
     """
-    max_position_size: float = Field(1.0, ge=0.0, le=1.0, description="Tamaño máximo de posición como fracción del capital total.")
-    stop_loss_pct: Optional[float] = Field(5.0, ge=0.0, le=100.0, description="Porcentaje de stop loss.")
-    take_profit_pct: Optional[float] = Field(15.0, ge=0.0, description="Porcentaje de take profit.")
+    max_position_size: float = Field(default=1.0, ge=0.0, le=1.0, description="Tamaño máximo de posición como fracción del capital total.")
+    stop_loss_pct: Optional[float] = Field(default=5.0, ge=0.0, le=100.0, description="Porcentaje de stop loss.")
+    take_profit_pct: Optional[float] = Field(default=15.0, ge=0.0, description="Porcentaje de take profit.")
 
 
 class StrategyConfig(BaseModel):
@@ -107,7 +107,7 @@ class StrategyConfig(BaseModel):
     name: str
     enabled: bool = True
     parameters: Dict[str, Any] = Field(default_factory=dict)
-    risk_management: RiskManagementConfig = Field(default_factory=RiskManagementConfig) # type: ignore
+    risk_management: RiskManagementConfig = Field(default_factory=lambda: RiskManagementConfig())
 
     @model_validator(mode="after")
     def validate_strategy_parameters(self) -> "StrategyConfig":
@@ -132,7 +132,7 @@ class CommissionConfig(BaseModel):
     Modelo de configuración para las comisiones de trading.
     """
     type: CommissionType = CommissionType.PERCENTAGE
-    rate: float = Field(0.001, ge=0.0, description="Tasa de comisión (por ejemplo, 0.001 para 0.1%).")
+    rate: float = Field(default=0.001, ge=0.0, description="Tasa de comisión (por ejemplo, 0.001 para 0.1%).")
 
 
 class BacktestingConfig(BaseModel):
@@ -140,8 +140,8 @@ class BacktestingConfig(BaseModel):
     Modelo de configuración para backtesting.
     """
     enabled: bool = True
-    initial_capital: float = Field(10000.0, gt=0.0, description="Capital inicial para backtesting.")
-    commission: CommissionConfig = Field(default_factory=CommissionConfig) # type: ignore
+    initial_capital: float = Field(default=10000.0, gt=0.0, description="Capital inicial para backtesting.")
+    commission: CommissionConfig = Field(default_factory=lambda: CommissionConfig())
     start_date: Optional[str] = Field(None, description="Fecha de inicio del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
     end_date: Optional[str] = Field(None, description="Fecha de fin del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
     save_trades: bool = True
@@ -158,7 +158,8 @@ class SQLiteSettings(BaseModel):
     max_overflow: int = 10
 
     @field_validator('path')
-    def create_db_directory(cls, v):
+    @classmethod
+    def create_db_directory(cls, v: str) -> str:
         """Crea el directorio para la base de datos si no existe."""
         db_path = Path(v)
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -170,7 +171,7 @@ class DatabaseConfig(BaseModel):
     Modelo de configuración para la base de datos.
     """
     type: DatabaseType = DatabaseType.SQLITE
-    sqlite: SQLiteSettings = Field(default_factory=SQLiteSettings)
+    sqlite: SQLiteSettings = Field(default_factory=lambda: SQLiteSettings())
 
 
 class EventsConfig(BaseModel):
@@ -178,7 +179,7 @@ class EventsConfig(BaseModel):
     Modelo de configuración para el sistema de eventos.
     """
     event_bus_type: EventBusType = EventBusType.IN_MEMORY
-    max_event_history: int = Field(10000, gt=0)
+    max_event_history: int = Field(default=10000, gt=0)
     enable_event_persistence: bool = True
 
 
@@ -202,7 +203,7 @@ class FileLogHandler(BaseModel):
 
     @field_validator('path')
     @classmethod
-    def create_log_directory(cls, v):
+    def create_log_directory(cls, v: str) -> str:
         """Crea el directorio para los logs si no existe."""
         log_path = Path(v)
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -215,8 +216,8 @@ class LoggingConfig(BaseModel):
     """
     level: LogLevel = LogLevel.INFO
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    console: ConsoleLogHandler = Field(default_factory=ConsoleLogHandler)
-    file: FileLogHandler = Field(default_factory=FileLogHandler)
+    console: ConsoleLogHandler = Field(default_factory=lambda: ConsoleLogHandler())
+    file: FileLogHandler = Field(default_factory=lambda: FileLogHandler())
 
 
 class SymbolConfig(BaseModel):
@@ -225,10 +226,11 @@ class SymbolConfig(BaseModel):
     """
     symbol: str = Field(..., min_length=1, description="Símbolo financiero, por ejemplo 'BTCUSDT'.")
     enabled: bool = True
-    timeframe: str = Field("1h", description="Intervalo de tiempo para los datos, por ejemplo '1m', '5m', '1h', '1d'.")
+    timeframe: str = Field(default="1h", description="Intervalo de tiempo para los datos, por ejemplo '1m', '5m', '1h', '1d'.")
 
     @field_validator('symbol')
-    def validate_symbol_format(cls, v):
+    @classmethod
+    def validate_symbol_format(cls, v: str) -> str:
         """Valida el formato del símbolo financiero."""
         if not v.replace("/", "").isalnum():
             raise ValueError("El símbolo financiero debe ser alfanumérico y puede incluir '/'.")
@@ -241,13 +243,13 @@ class TradingConfig(BaseSettings):
     """
 
     # Secciones de configuración
-    app: AppConfig = Field(default_factory=AppConfig)
-    data_source: DataSourceConfig = Field(default_factory=DataSourceConfig)
+    app: AppConfig = Field(default_factory=lambda: AppConfig())
+    data_source: DataSourceConfig = Field(default_factory=lambda: DataSourceConfig())
     strategy: StrategyConfig = Field(..., description="Configuración de la estrategia de trading.")
-    backtesting: BacktestingConfig = Field(default_factory=BacktestingConfig)
-    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    events: EventsConfig = Field(default_factory=EventsConfig)
-    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    backtesting: BacktestingConfig = Field(default_factory=lambda: BacktestingConfig()) # type: ignore
+    database: DatabaseConfig = Field(default_factory=lambda: DatabaseConfig())
+    events: EventsConfig = Field(default_factory=lambda: EventsConfig()) # type: ignore
+    logging: LoggingConfig = Field(default_factory=lambda: LoggingConfig())
     symbols: List[SymbolConfig] = Field(default_factory=list)
 
     # Configuraciones de pydantic-settings
@@ -260,17 +262,29 @@ class TradingConfig(BaseSettings):
         extra="forbid"
     )
 
-    @model_validator(mode="before")
-    def validate_symbols_not_empty(cls, values):
+    @model_validator(mode="after")
+    def validate_symbols_not_empty(self) -> "TradingConfig":
         """Valida que la lista de símbolos no esté vacía."""
-        symbols = values.get('symbols', [])
+        symbols = self.symbols
         if not symbols:
-            raise ValueError("La lista de símbolos no puede estar vacía. Debe especificar al menos un símbolo financiero.")
-        return values
-    
+            self.symbols = [SymbolConfig(symbol="BTCUSDT")]
+        return self
+
 
 def load_config(config_path: Optional[Path]) -> TradingConfig:
     """
     Carga la configuración desde un archivo YAML.
     """
-    pass
+    if config_path is not None:
+        class CustomTradingConfig(TradingConfig):
+            model_config = SettingsConfigDict(
+                yaml_file=str(config_path),
+                yaml_file_encoding="utf-8",
+                env_file=".env",
+                env_file_encoding="utf-8",
+                case_sensitive=False,
+                extra="forbid"
+            )
+        return CustomTradingConfig() # type: ignore
+    else:
+        return TradingConfig() # type: ignore
