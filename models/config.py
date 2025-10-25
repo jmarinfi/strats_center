@@ -289,11 +289,8 @@ class TradingConfig(BaseSettings):
         return self
 
 
-def load_config(config_path: Optional[Path] = None) -> TradingConfig:
+def load_config() -> TradingConfig:
     """
     Carga la configuración desde un archivo YAML.
     """
-    if config_path is None:
-        return TradingConfig()  # type: ignore
-    else:
-        return TradingConfig(_yaml_file=str(config_path)) # type: ignore
+    return TradingConfig() # type: ignore

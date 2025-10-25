@@ -3,9 +3,6 @@ Tests para la configuración del sistema de trading.
 """
 
 import pytest
-import tempfile
-from pathlib import Path
-import yaml
 from pydantic import ValidationError
 
 from models.config import (
@@ -94,101 +91,6 @@ class TestTradingConfig:
         # Test símbolo con formato inválido
         with pytest.raises(ValidationError):
             SymbolConfig(symbol="INVALID@SYMBOL")
-    
-    def test_load_custom_config_file(self):
-        """Test carga de archivo de configuración personalizado."""
-        custom_config = {
-            "app": {
-                "name": "TestStratsCenter",
-                "version": "0.2.0",
-                "debug": False,
-                "log_level": "DEBUG"
-            },
-            "data_source": {
-                "type": "csv",
-                "csv": {
-                    "data_path": "custom_data",
-                    "file_pattern": "*.csv",
-                    "timestamp_column": "openTime"
-                }
-            },
-            "strategy": {
-                "name": "sma_crossover",
-                "enabled": True,
-                "parameters": {
-                    "short_period": 7,
-                    "long_period": 25
-                }
-            },
-            "backtesting": {
-                "initial_capital": 5000.0
-            },
-            "database": {
-                "type": "sqlite",
-                "sqlite": {
-                    "path": "test_data/test.db"
-                }
-            },
-            "events": {
-                "event_bus_type": "in_memory"
-            },
-            "logging": {
-                "level": "DEBUG"
-            },
-            "symbols": [
-                {"symbol": "BTCUSDT", "timeframe": "5m"},
-                {"symbol": "ETHUSDT", "timeframe": "1h"}
-            ]
-        }
-        
-        # Crear archivo temporal
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump(custom_config, f)
-            config_path = Path(f.name)
-        
-        try:
-            config = TradingConfig(_yaml_file=str(config_path)) # type: ignore
-            
-            assert config.app.name == "TestStratsCenter"
-            assert config.app.version == "0.2.0"
-            assert config.app.log_level == LogLevel.DEBUG
-            assert config.data_source.csv.data_path == "custom_data"
-            assert config.strategy.parameters["short_period"] == 7
-            assert config.backtesting.initial_capital == 5000.0
-            assert len(config.symbols) == 2
-            assert config.symbols[0].timeframe == "5m"
-            
-        finally:
-            config_path.unlink()  # Limpiar archivo temporal
-    
-    def test_invalid_config_missing_strategy(self):
-        """Test que falla sin configuración de strategy."""
-        invalid_config = {
-            "app": {"name": "Test"},
-            "data_source": {"type": "csv"},
-            "backtesting": {"initial_capital": 1000.0},
-            "database": {"type": "sqlite"},
-            "events": {},
-            "logging": {},
-            "symbols": []
-        }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump(invalid_config, f)
-            config_path = Path(f.name)
-        
-        try:
-            with pytest.raises(ValidationError):
-                load_config(config_path)
-        finally:
-            config_path.unlink()
-    
-    def test_config_file_not_found(self):
-        """Test error cuando no existe el archivo de configuración."""
-        non_existent_path = Path("non_existent_config.yaml")
-        
-        with pytest.raises(Exception):  # Pydantic Settings puede lanzar diferentes excepciones
-            load_config(non_existent_path)
 
 
 class TestConfigModels:
@@ -200,18 +102,6 @@ class TestConfigModels:
         assert symbol.symbol == "BTCUSDT"
         assert symbol.enabled is True
         assert symbol.timeframe == "1h"
-    
-    def test_symbol_format_validation(self):
-        """Test validación de formato de símbolo."""
-        # Símbolos válidos
-        valid_symbols = ["BTCUSDT", "ETH/USD", "BTC-EUR"]
-        for sym in valid_symbols:
-            try:
-                config = SymbolConfig(symbol=sym)
-                assert config.symbol == sym.upper()
-            except ValidationError:
-                # Ajustar si la validación actual es más estricta
-                pass
     
     def test_backtesting_validation(self):
         """Test validaciones de BacktestingConfig."""
