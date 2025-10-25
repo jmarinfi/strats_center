@@ -14,12 +14,6 @@ data_source:
     data_path: "backtest_data"
     file_pattern: "*.csv"
     timestamp_column: "openTime"
-    price_columns:
-      open: "open"
-      high: "high"
-      low: "low"
-      close: "close"
-      volume: "volume"
 
 strategy:
   name: "sma_crossover"
