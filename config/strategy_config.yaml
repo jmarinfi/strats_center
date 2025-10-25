@@ -1,0 +1,69 @@
+# Trading Platform Configuration
+# =============================
+# Formato adaptado a tus archivos CSV de Binance
+
+app:
+  name: "StratsCenter"
+  version: "0.1.0"
+  debug: true
+  log_level: "INFO"
+
+data_source:
+  type: "csv"
+  csv:
+    data_path: "backtest_data"
+    file_pattern: "*.csv"
+    timestamp_column: "openTime"
+    price_columns:
+      open: "open"
+      high: "high"
+      low: "low"
+      close: "close"
+      volume: "volume"
+
+strategy:
+  name: "sma_crossover"
+  enabled: true
+  parameters:
+    short_period: 10
+    long_period: 30
+    min_price_change_pct: 0.5
+  risk_management:
+    max_position_size: 1.0
+    stop_loss_pct: 5.0
+    take_profit_pct: 15.0
+
+backtesting:
+  enabled: true
+  initial_capital: 10000.0
+  commission:
+    type: "percentage"
+    rate: 0.001
+  save_trades: true
+  save_portfolio_snapshots: true
+  generate_report: true
+
+database:
+  type: "sqlite"
+  sqlite:
+    path: "data/strats_center.db"
+
+events:
+  event_bus_type: "in_memory"
+  max_event_history: 10000
+  enable_event_persistence: true
+
+logging:
+  level: "INFO"
+  console:
+    enabled: true
+    level: "INFO"
+  file:
+    enabled: true
+    level: "DEBUG"
+    path: "logs/strats_center.log"
+
+symbols:
+  - symbol: "BTCUSDT"
+    enabled: true
+    timeframe: "1h"

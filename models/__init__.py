@@ -21,6 +21,21 @@ from models.events import (
     FillEvent,
 )
 
+
+# Configuration models
+from models.config import (
+    TradingConfig,
+    AppConfig,
+    DataSourceConfig,
+    StrategyConfig,
+    BacktestingConfig,
+    DatabaseConfig,
+    EventsConfig,
+    LoggingConfig,
+    SymbolConfig,
+    load_config,
+)
+
 __all__ = [
     # Enums
     "EventType",
@@ -33,4 +48,15 @@ __all__ = [
     "SignalEvent",
     "OrderEvent",
     "FillEvent",
+    # Configuration
+    "TradingConfig",
+    "AppConfig", 
+    "DataSourceConfig",
+    "StrategyConfig",
+    "BacktestingConfig",
+    "DatabaseConfig",
+    "EventsConfig",
+    "LoggingConfig",
+    "SymbolConfig",
+    "load_config",
 ]
