@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict, YamlConfigSettingsSource
 
 
 class DataSourceType(str, Enum):
@@ -142,8 +142,8 @@ class BacktestingConfig(BaseModel):
     enabled: bool = True
     initial_capital: float = Field(default=10000.0, gt=0.0, description="Capital inicial para backtesting.")
     commission: CommissionConfig = Field(default_factory=lambda: CommissionConfig())
-    start_date: Optional[str] = Field(None, description="Fecha de inicio del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
-    end_date: Optional[str] = Field(None, description="Fecha de fin del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
+    start_date: Optional[str] = Field(default=None, description="Fecha de inicio del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
+    end_date: Optional[str] = Field(default=None, description="Fecha de fin del backtest (YYYY-MM-DD) o nulo para utilizar todos los datos.")
     save_trades: bool = True
     save_portfolio_snapshots: bool = True
     generate_report: bool = True
@@ -262,6 +262,24 @@ class TradingConfig(BaseSettings):
         extra="forbid"
     )
 
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type["BaseSettings"],
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings
+    ):
+        """Personaliza las fuentes de configuración para incluir archivos YAML."""
+        return (
+            init_settings,
+            YamlConfigSettingsSource(settings_cls),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings
+        )
+
     @model_validator(mode="after")
     def validate_symbols_not_empty(self) -> "TradingConfig":
         """Valida que la lista de símbolos no esté vacía."""
@@ -271,20 +289,11 @@ class TradingConfig(BaseSettings):
         return self
 
 
-def load_config(config_path: Optional[Path]) -> TradingConfig:
+def load_config(config_path: Optional[Path] = None) -> TradingConfig:
     """
     Carga la configuración desde un archivo YAML.
     """
-    if config_path is not None:
-        class CustomTradingConfig(TradingConfig):
-            model_config = SettingsConfigDict(
-                yaml_file=str(config_path),
-                yaml_file_encoding="utf-8",
-                env_file=".env",
-                env_file_encoding="utf-8",
-                case_sensitive=False,
-                extra="forbid"
-            )
-        return CustomTradingConfig() # type: ignore
+    if config_path is None:
+        return TradingConfig()  # type: ignore
     else:
-        return TradingConfig() # type: ignore
+        return TradingConfig(_yaml_file=str(config_path)) # type: ignore
