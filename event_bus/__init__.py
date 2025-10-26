@@ -10,12 +10,24 @@ from .exceptions import (
     EventProcessingError,
     EventBusConfigError,
 )
+from .handlers import (
+    IEventHandler,
+    EventHandlerRegistry,
+    BaseEventHandler,
+    create_function_handler,
+)
 
 __all__ = [
+    # Exceptions
     "EventBusError",
     "HandlerNotFoundError",
     "HandlerRegistrationError",
     "EventPublishError",
     "EventProcessingError",
     "EventBusConfigError",
+    # Handlers
+    "IEventHandler",
+    "EventHandlerRegistry",
+    "BaseEventHandler",
+    "create_function_handler",
 ]
