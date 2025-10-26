@@ -1,6 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ class MarketEvent(Event):
     type: EventType = EventType.MARKET
     symbol: str
     timestamp: datetime
-    data: Optional[Dict[str, float]] = None
+    data: Optional[Dict[str, Any]] = None
     
 
 class SignalEvent(Event):
@@ -30,7 +30,7 @@ class SignalEvent(Event):
     """
     type: EventType = EventType.SIGNAL
     symbol: str
-    date: datetime
+    timestamp: datetime
     signal_type: SignalType
 
 
@@ -43,6 +43,8 @@ class OrderEvent(Event):
     order_type: OrderType
     quantity: float
     direction: OrderDirection
+    timestamp: datetime
+    price: Optional[float] = None
 
 
 class FillEvent(Event):
@@ -50,7 +52,7 @@ class FillEvent(Event):
     Encapsula la noción de una orden que ha sido ejecutada.
     """
     type: EventType = EventType.FILL
-    timeindex: datetime
+    timestamp: datetime
     symbol: str
     exchange: str
     quantity: float

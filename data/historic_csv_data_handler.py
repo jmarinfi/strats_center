@@ -55,7 +55,11 @@ class HistoricCSVDataHandler(IDataHandler):
 
             self.latest_symbol_data.append(bar_data_with_dt)
 
-            self.events_queue.put(MarketEvent())
+            self.events_queue.put(MarketEvent(
+                symbol=self.symbol,
+                timestamp=index,
+                data=bar_data_with_dt.to_dict()
+            ))
 
     def get_latest_bars(self, N: int = 1) -> List[Series]:
         """Devuelve las últimas N barras."""

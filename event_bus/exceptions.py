@@ -16,7 +16,7 @@ class HandlerNotFoundError(EventBusError):
 class HandlerRegistrationError(EventBusError):
     """Excepción lanzada cuando hay un error al registrar un manejador de eventos."""
 
-    def __init(self, event_type: str, handler_name: str, reason: str) -> None:
+    def __init__(self, event_type: str, handler_name: str, reason: str) -> None:
         self.event_type = event_type
         self.handler_name = handler_name
         self.reason = reason
