@@ -7,6 +7,9 @@ class EventType(str, Enum):
     SIGNAL = "SIGNAL"
     ORDER = "ORDER"
     FILL = "FILL"
+    PORTFOLIO = "PORTFOLIO"
+    BACKTEST = "BACKTEST"
+    ERROR = "ERROR"
 
 
 class SignalType(str, Enum):

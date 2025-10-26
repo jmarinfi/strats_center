@@ -1,5 +1,6 @@
 from enum import Enum
 from datetime import datetime
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -18,6 +19,9 @@ class MarketEvent(Event):
     Indica una nueva actualización de datos de mercado.
     """
     type: EventType = EventType.MARKET
+    symbol: str
+    timestamp: datetime
+    data: Optional[Dict[str, float]] = None
     
 
 class SignalEvent(Event):
@@ -53,3 +57,36 @@ class FillEvent(Event):
     direction: OrderDirection
     fill_cost: float
     commission: float
+
+
+class PortfolioEvent(Event):
+    """
+    Evento para actualizaciones de portafolio.
+    """
+    type: EventType = EventType.PORTFOLIO
+    timestamp: datetime
+    total_value: float
+    cash: float
+    positions: Dict[str, float]
+
+
+class BacktestEvent(Event):
+    """
+    Evento específico para backtesting.
+    """
+    type: EventType = EventType.BACKTEST
+    action: str # "start", "stop", "pause", "resume"
+    timestamp: datetime
+    message: Optional[str] = None
+
+
+class ErrorEvent(Event):
+    """
+    Evento para reportar errores en el sistema.
+    """
+    type: EventType = EventType.ERROR
+    timestamp: datetime
+    source: str
+    error_type: str
+    message: str
+    details: Optional[Dict] = None
