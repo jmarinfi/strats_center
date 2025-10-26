@@ -14,7 +14,7 @@ import sys
 import os
 from typing import Tuple, Optional
 
-from config.config import load_config, TradingConfig
+from models import load_config, TradingConfig
 from data import BinanceCSVLoader
 
 
