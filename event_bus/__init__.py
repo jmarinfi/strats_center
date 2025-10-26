@@ -16,6 +16,7 @@ from .handlers import (
     BaseEventHandler,
     create_function_handler,
 )
+from .event_bus import EventBus
 
 __all__ = [
     # Exceptions
@@ -30,4 +31,6 @@ __all__ = [
     "EventHandlerRegistry",
     "BaseEventHandler",
     "create_function_handler",
+    # Event Bus
+    "EventBus",
 ]
