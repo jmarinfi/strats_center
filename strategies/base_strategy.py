@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 
@@ -31,7 +31,7 @@ class BaseStrategy(BaseEventHandler, ABC):
         self.logger.info(f"Estrategia '{self.name}' inicializada con símbolos: {self.symbols}")
 
     @property
-    def supported_events(self) -> set[EventType]:
+    def supported_events(self) -> Set[EventType]:
         """Eventos que maneja esta estrategia."""
         return {EventType.MARKET}
     
