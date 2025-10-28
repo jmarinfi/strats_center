@@ -15,6 +15,7 @@ class BaseStrategy(BaseEventHandler, ABC):
 
     def __init__(self, name: str, symbols: List[str], event_bus: EventBus, parameters: Optional[Dict[str, Any]] = None) -> None:
         """Inicializa la estrategia con un nombre, símbolos y parámetros opcionales."""
+        super().__init__(name)
         self.name = name
         self.symbols = set(symbols)
         self.parameters = parameters or {}
