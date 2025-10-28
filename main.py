@@ -8,14 +8,19 @@ Este módulo proporciona las funciones principales para:
 4. Ejecutar tests básicos de integración
 """
 
+from datetime import datetime
 import logging
 from pathlib import Path
 import sys
-import os
-from typing import Tuple, Optional
+from typing import Set, Tuple, Optional
 
+from event_bus.event_bus import EventBus
+from event_bus.handlers import BaseEventHandler, EventHandlerRegistry
 from models import load_config, TradingConfig
 from data import BinanceCSVLoader
+from models.enums import EventType, SignalType
+from models.events import MarketEvent, SignalEvent, Event
+from strategies.simple_price_strategy import SimplePriceStrategy
 
 
 def setup_logging(config: TradingConfig) -> logging.Logger:
@@ -257,6 +262,129 @@ def test_database_setup(config: TradingConfig) -> bool:
     except Exception as e:
         print(f"❌ ERROR en configuración de BD: {e}")
         return False
+    
+
+class SignalCollectorHandler(BaseEventHandler):
+    """
+    Un handler simple que recolecta los SignalEvents emitidos.
+    """
+    def __init__(self, name: str = "SignalCollector") -> None:
+        super().__init__(name)
+        self.signals_received = []
+
+    @property
+    def supported_events(self) -> Set[EventType]:
+        return {EventType.SIGNAL}
+    
+    def handle(self, event: Event) -> None:
+        if isinstance(event, SignalEvent):
+            self.signals_received.append(event)
+            self.logger.info(f"SignalCollector: Señal recibida - {event.symbol} | {event.signal_type} | {event.timestamp}")
+
+
+def setup_and_run_simple_strategy_example():
+    """
+    Función de ejemplo para instanciar y probar SimplePriceStrategy.
+    """
+    print("\n🚀 EJEMPLO: SIMPLE PRICE STRATEGY")
+    print("-" * 40)
+
+    # 1. Crear infraestructura de eventos
+    print("🔧 Paso 1: Creando infraestructura de eventos...")
+    registry = EventHandlerRegistry()
+    event_bus = EventBus(registry, max_history=10)
+    print("✅ Event Bus y Registry creados")
+
+    # 2. Instanciar la estrategia
+    print("\n🎯 Paso 2: Instanciando estrategia SimplePrice...")
+    symbols_to_trade = ["BTCUSDT"]
+    strategy_name = "SimplePrice_1"
+    simple_strategy = SimplePriceStrategy(
+        name=strategy_name,
+        symbols=symbols_to_trade,
+        event_bus=event_bus
+    )
+    print(f"✅ Estrategia '{strategy_name}' creada para símbolos: {symbols_to_trade}")
+
+    # 3. Registrar la estrategia en el event bus
+    print("\n📝 Paso 3: Registrando estrategia en Event Bus...")
+    registry.register_handler(simple_strategy)
+    print("✅ Estrategia registrada como handler")
+
+    # 4. Registrar un SignalCollector para capturar señales
+    print("\n📡 Paso 4: Registrando SignalCollector...")
+    signal_collector = SignalCollectorHandler()
+    registry.register_handler(signal_collector)
+    print("✅ SignalCollector registrado")
+
+    # 5. Simular un MarketEvent para probar la estrategia
+    print("\n📊 Paso 5: Simulando eventos de mercado...")
+
+    market_data_bar = {
+        'open': 100.0,
+        'high': 110.0,
+        'low': 90.0,
+        'close': 105.0,
+        'volume': 1000.0
+    }
+    market_event_long = MarketEvent(
+        symbol="BTCUSDT",
+        timestamp=datetime.now(),
+        data=market_data_bar
+    )
+
+    print("📈 Publicando MarketEvent (LONG esperado)...")
+    event_bus.publish(market_event_long)
+
+    market_event_exit = MarketEvent(
+        symbol="BTCUSDT",
+        timestamp=datetime.now(),
+        data={
+            'open': 105.0,
+            'high': 108.0,
+            'low': 98.0,
+            'close': 102.0, # Close <= Open, debería generar EXIT
+            'volume': 1200
+        }
+    )
+    print("📉 Publicando MarketEvent (EXIT esperado)...")
+    event_bus.publish(market_event_exit)
+
+    # 6. Verificar Resultados
+    print("\n🔍 Paso 6: Verificando resultados...")
+
+    print(f"\n📚 Historial del Event Bus ({len(event_bus.get_history())} eventos):")
+    for ev in event_bus.get_history():
+        if isinstance(ev, MarketEvent):
+            details = f"Data: {ev.data}" if ev.data else ""
+            print(f"  - {ev.type} para {ev.symbol} @ {ev.timestamp}. {details}")
+        elif isinstance(ev, SignalEvent):
+            details = f"Type: {ev.signal_type}"
+            print(f"  - {ev.type} para {ev.symbol} @ {ev.timestamp}. {details}")
+        else:
+            print(f"  - {ev.type} (evento base)")
+
+    print(f"\n📡 Señales recolectadas por SignalCollector ({len(signal_collector.signals_received)}):")
+    if signal_collector.signals_received:
+        for signal in signal_collector.signals_received:
+            print(f"  - Señal: {signal.signal_type} para {signal.symbol} @ {signal.timestamp}")
+    else:
+        print("  - No se recolectaron señales.")
+
+    # Comprobación final
+    print("\n✅ Verificación final:")
+    try:
+        assert len(signal_collector.signals_received) == 2, "Deberían haberse generado 2 señales"
+        assert signal_collector.signals_received[0].signal_type == SignalType.LONG
+        assert signal_collector.signals_received[1].signal_type == SignalType.EXIT
+        print("✅ ¡Ejemplo completado exitosamente!")
+        print("🎯 Estrategia SimplePrice funcionando correctamente")
+    except AssertionError as e:
+        print(f"❌ ERROR en verificación: {e}")
+        raise
+
+    print("-" * 40)
+    print("🏁 Fin Ejemplo SimplePriceStrategy")
 
 
 def run_integration_tests() -> bool:
@@ -278,13 +406,21 @@ def run_integration_tests() -> bool:
         print("\n❌ ABORTANDO: La configuración no se pudo cargar")
         return False
     
-    # Test 2: Datos  
-    data_ok = test_data_loading(config)
-    success &= data_ok
-    
-    # Test 3: Base de datos
-    db_ok = test_database_setup(config)
-    success &= db_ok
+    if isinstance(config, TradingConfig):
+        # Test 2: Datos  
+        data_ok = test_data_loading(config)
+        success &= data_ok
+        
+        # Test 3: Base de datos
+        db_ok = test_database_setup(config)
+        success &= db_ok
+
+    # Test 4: Ejemplo SimplePriceStrategy
+    try:
+        setup_and_run_simple_strategy_example()
+    except Exception as e:
+        print(f"❌ ERROR en ejemplo SimplePriceStrategy: {e}")
+        success = False
     
     # Resumen final
     print("\n" + "=" * 70)
