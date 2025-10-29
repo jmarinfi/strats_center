@@ -169,12 +169,6 @@ class BaseEventHandler(IEventHandler):
     @property
     def handler_name(self) -> str:
         return self._name
-    
-    def handle(self, event: Event) -> None:
-        """
-        Maneja un evento específico. Debe ser sobrescrito por subclases.
-        """
-        self.logger.debug(f"Evento recibido: {event.type.name}")
 
     @property
     @abstractmethod

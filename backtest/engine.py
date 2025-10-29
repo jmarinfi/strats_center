@@ -4,7 +4,8 @@ from queue import Queue, Empty
 from models import TradingConfig, MarketEvent
 from strategies import BaseStrategy
 from data import IDataHandler
-from event_bus import EventBus, EventHandlerRegistry
+from event_bus import EventBus
+from broker import IBroker
 
 
 logger = logging.getLogger(__name__)
