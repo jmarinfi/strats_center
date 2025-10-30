@@ -73,4 +73,16 @@ class HistoricCSVDataHandler(IDataHandler):
         except Exception as e:
             # No hay suficientes barras disponibles, devolver todas las disponibles
             return self.latest_symbol_data
+        
+    def get_latest_price(self, symbol: str) -> Optional[float]:
+        """Retorna el último precio de cierre (close) de la barra más reciente almacentada en latest_symbol_data."""
+        # Este handler solo maneja un símbolo, así que ignoramos si pide otro símbolo
+        if symbol != self.symbol or not self.latest_symbol_data:
+            return None
+        
+        try:
+            latest_bar = self.latest_symbol_data[-1]
+            return float(latest_bar['close'])
+        except Exception as e:
+            raise ValueError(f"No se pudo obtener el último precio para el símbolo {symbol}: {e}")
 

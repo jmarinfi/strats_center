@@ -24,6 +24,11 @@ class IDataHandler(ABC):
         raise NotImplementedError("Este método debe ser implementado por la subclase.")
     
     @abstractmethod
+    def get_latest_price(self, symbol: str) -> Optional[float]:
+        """Retorna el último precio conocido para un símbolo dado."""
+        raise NotImplementedError("Este método debe ser implementado por la subclase.")
+    
+    @abstractmethod
     def update_bars(self):
         """Avanza el feed de datos en un paso y coloca un MarketEvent en la cola de eventos."""
         raise NotImplementedError("Este método debe ser implementado por la subclase.")
