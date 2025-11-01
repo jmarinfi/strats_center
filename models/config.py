@@ -37,6 +37,14 @@ class CommissionType(str, Enum):
     FIXED = "fixed"
 
 
+class SizingType(str, Enum):
+    """
+    Enum que define los tipos de dimensionamiento de órdenes soportados.
+    """
+    FIXED = "fixed"
+    PERCENTAGE = "percentage"
+
+
 class EventBusType(str, Enum):
     """
     Enum que define los tipos de buses de eventos soportados.
@@ -98,6 +106,14 @@ class RiskManagementConfig(BaseModel):
     max_position_size: float = Field(default=1.0, ge=0.0, le=1.0, description="Tamaño máximo de posición como fracción del capital total.")
     stop_loss_pct: Optional[float] = Field(default=5.0, ge=0.0, le=100.0, description="Porcentaje de stop loss.")
     take_profit_pct: Optional[float] = Field(default=15.0, ge=0.0, description="Porcentaje de take profit.")
+
+
+class SizingConfig(BaseModel):
+    """
+    Modelo de configuración para el dimensionamiento de órdenes.
+    """
+    type: SizingType = SizingType.FIXED
+    value: float = Field(default=0.1, gt=0.0, description="Valor de dimensionamiento. Si es 'fixed', es la cantidad fija; si es 'percentage', es el porcentaje del capital total.")
 
 
 class StrategyConfig(BaseModel):

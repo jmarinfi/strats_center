@@ -24,3 +24,8 @@ class IPortfolio(BaseEventHandler, ABC):
     def get_current_cash(self) -> float:
         """Retorna el efectivo actual disponible en la cartera."""
         raise NotImplementedError
+    
+    @abstractmethod
+    def print_final_stats(self) -> None:
+        """Imprime las estadísticas finales de la cartera."""
+        raise NotImplementedError

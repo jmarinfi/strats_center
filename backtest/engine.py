@@ -6,6 +6,8 @@ from strategies import BaseStrategy
 from data import IDataHandler
 from event_bus import EventBus
 from broker import IBroker
+from portfolio import IPortfolio
+from order_manager import IOrderManager
 
 
 logger = logging.getLogger(__name__)
@@ -21,8 +23,8 @@ class BacktestEngine:
             config: TradingConfig,
             data_handler: IDataHandler,
             strategy: BaseStrategy,
-            portfolio: BasePortfolio,
-            order_manager: BaseOrderManager,
+            portfolio: IPortfolio,
+            order_manager: IOrderManager,
             broker: IBroker,
             event_bus: EventBus,
     ) -> None:
@@ -61,4 +63,4 @@ class BacktestEngine:
 
         logger.info("Backtesting finalizado.")
 
-        self.portfolio.print_final_results()
+        self.portfolio.print_final_stats()

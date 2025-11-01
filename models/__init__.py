@@ -30,12 +30,15 @@ from models.config import (
     StrategyConfig,
     CommissionConfig,
     CommissionType,
+    SizingType,
+    SizingConfig,
     BacktestingConfig,
     DatabaseConfig,
     EventsConfig,
     LoggingConfig,
     SymbolConfig,
     load_config,
+
 )
 
 __all__ = [
@@ -57,6 +60,8 @@ __all__ = [
     "StrategyConfig",
     "CommissionConfig",
     "CommissionType",
+    "SizingType",
+    "SizingConfig",
     "BacktestingConfig",
     "DatabaseConfig",
     "EventsConfig",
