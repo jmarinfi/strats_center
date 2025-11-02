@@ -28,7 +28,7 @@ strategy:
     take_profit_pct: 0
   sizing:
     type: "fixed" # Opciones: "fixed", "percentage"
-    value: 0.1    # Significado: 0.1 unidades (ej. 0.1 BTC) si es fixed, 10% si es percentage
+    value: 0.001    # Significado: 0.1 unidades (ej. 0.1 BTC) si es fixed, 10% si es percentage
 
 backtesting:
   enabled: true

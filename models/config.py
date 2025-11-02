@@ -124,6 +124,7 @@ class StrategyConfig(BaseModel):
     enabled: bool = True
     parameters: Dict[str, Any] = Field(default_factory=dict)
     risk_management: RiskManagementConfig = Field(default_factory=lambda: RiskManagementConfig())
+    sizing: SizingConfig = Field(default_factory=lambda: SizingConfig())
 
     @model_validator(mode="after")
     def validate_strategy_parameters(self) -> "StrategyConfig":
