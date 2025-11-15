@@ -29,3 +29,13 @@ class OrderDirection(str, Enum):
     """Enum para las direcciones de las órdenes de trading."""
     BUY = "BUY"
     SELL = "SELL"
+
+class OrderStatus(str, Enum):
+    """Estado de una orden de trading."""
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
+    PARTIALLY_FILLED = "PARTIALLY_FILLED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
+    

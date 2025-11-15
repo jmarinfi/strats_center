@@ -81,6 +81,15 @@ class CSVDataSourceSettings(BaseModel):
     timestamp_column: str = "openTime"
 
 
+class ExchangeSettings(BaseModel):
+    """
+    Modelo de configuración para una conexión a un exchange.
+    """
+    api_key: str = ""
+    api_secret: str = ""
+    base_url: str = "https://api.binance.com"
+
+
 class BinanceAPISettings(BaseModel):
     """
     Modelo de configuración para la API de Binance.
@@ -262,6 +271,7 @@ class TradingConfig(BaseSettings):
     # Secciones de configuración
     app: AppConfig = Field(default_factory=lambda: AppConfig())
     data_source: DataSourceConfig = Field(default_factory=lambda: DataSourceConfig())
+    exchange: ExchangeSettings = Field(default_factory=lambda: ExchangeSettings())
     strategy: StrategyConfig = Field(..., description="Configuración de la estrategia de trading.")
     backtesting: BacktestingConfig = Field(default_factory=lambda: BacktestingConfig()) # type: ignore
     database: DatabaseConfig = Field(default_factory=lambda: DatabaseConfig())

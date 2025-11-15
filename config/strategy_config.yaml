@@ -15,6 +15,11 @@ data_source:
     file_pattern: "*.csv"
     timestamp_column: "openTime"
 
+exchange:
+  api_key: ""
+  api_secret: ""
+  base_url: "https://api.binance.com"
+
 strategy:
   name: "simple_price_strategy"
   enabled: true
